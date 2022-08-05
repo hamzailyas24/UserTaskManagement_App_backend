@@ -284,7 +284,7 @@ app.post("/deleteuser/:id", async (req, res) => {
 // create a add task route and save the task to the database with the user id
 
 app.post("/addtask", async (req, res) => {
-  const { user_id, title, description, priority, time, remarks, status } =
+  const { user_id, title, description, priority, time, status } =
     req.body;
   if (!mongoose.Types.ObjectId.isValid(user_id)) {
     return res.send({
@@ -298,7 +298,6 @@ app.post("/addtask", async (req, res) => {
     description,
     priority,
     time,
-    remarks,
     status,
   });
 
