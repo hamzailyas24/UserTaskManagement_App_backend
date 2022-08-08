@@ -281,23 +281,40 @@ app.post("/deleteuser/:id", async (req, res) => {
   }
 });
 
-// create a add task route and save the task to the database with the user id
+// create a add task route with by default remarks as pending and save the task to the database with the user id
 
 app.post("/addtask", async (req, res) => {
-  const { user_id, title, description, priority, time, status } =
-    req.body;
+  const {
+    user_id,
+    title,
+    description,
+    priority,
+    time,
+    remarks = "pending",
+    status,
+  } = req.body;
+
   if (!mongoose.Types.ObjectId.isValid(user_id)) {
-    return res.send({
-      message: "invalid user id",
+    return res.status(400).send({
+      message: "Invalid user id",
       status: false,
     });
   }
+
+  if (!user_id || !title || !description || !priority || !time || !status) {
+    return res.status(400).send({
+      message: "Please fill all the fields",
+      status: false,
+    });
+  }
+
   const task = new Task({
     user_id,
     title,
     description,
     priority,
     time,
+    remarks,
     status,
   });
 
@@ -327,46 +344,66 @@ app.post("/addtask", async (req, res) => {
   }
 });
 
-// create a update task route and update the task of the user in the database with the user id
+// create a update task route and update the task of the user if user wants to update only the title or description or priority or time or status or remarks of the task then update only that field and save the task to the database.
 
 app.post("/updatetask", async (req, res) => {
-  const {
-    user_id,
-    task_id,
-    title,
-    description,
-    priority,
-    time,
-    remarks,
-    status,
-  } = req.body;
-  if (!mongoose.Types.ObjectId.isValid(user_id)) {
-    return res.send({
-      message: "invalid user id",
-      status: false,
-    });
-  }
-  if (!mongoose.Types.ObjectId.isValid(task_id)) {
-    return res.send({
-      message: "invalid task id",
-      status: false,
-    });
-  }
-  const task = new Task({
-    user_id,
-    title,
-    description,
-    priority,
-    time,
-    remarks,
-    status,
-  });
-
   try {
-    await Task.findByIdAndUpdate(task_id, task);
+    const { task_id, title, description, priority, time, status, remarks } =
+      req.body;
+    if (!mongoose.Types.ObjectId.isValid(task_id)) {
+      return res.status(400).send({
+        message: "Invalid task id",
+        status: false,
+      });
+    }
+
+    if (!task_id) {
+      return res.status(400).send({
+        message: "Please fill all the fields",
+        status: false,
+      });
+    }
+
+    const task = await Task.findById(task_id);
+    if (!task) {
+      return res.send({
+        message: "Task not found",
+        status: false,
+      });
+    }
+    if (title) {
+      task.title = title;
+    }
+    if (description) {
+      task.description = description;
+    }
+    if (priority) {
+      task.priority = priority;
+    }
+    if (time) {
+      task.time = time;
+    }
+    if (status) {
+      task.status = status;
+    }
+    if (remarks) {
+      task.remarks = remarks;
+    }
+    await task.save();
     res.send({
       message: "Task updated successfully",
       status: true,
+      task: {
+        task_id: task._id,
+        user_id: task.user_id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        time: task.time,
+        remarks: task.remarks,
+        status: task.status,
+        createdAt: task.createdAt,
+      },
     });
   } catch (error) {
     res.send({
