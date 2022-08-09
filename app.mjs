@@ -347,50 +347,38 @@ app.post("/addtask", async (req, res) => {
 // create a update task route and update the task of the user if user wants to update only the title or description or priority or time or status or remarks of the task then update only that field and save the task to the database.
 
 app.post("/updatetask", async (req, res) => {
+  const { task_id, title, description, priority, time, status } = req.body;
+  if (!mongoose.Types.ObjectId.isValid(task_id)) {
+    return res.status(400).send({
+      message: "Invalid task id",
+      status: false,
+    });
+  }
   try {
-    const { task_id, title, description, priority, time, status, remarks } =
-      req.body;
+    const task = await Task.findByIdAndUpdate(
+      { _id: task_id },
+      {
+        title: title,
+        description: description,
+        priority: priority,
+        time: time,
+        status: status,
+      },
+      { new: true }
+    );
     if (!mongoose.Types.ObjectId.isValid(task_id)) {
       return res.status(400).send({
         message: "Invalid task id",
         status: false,
       });
     }
-
-    if (!task_id) {
-      return res.status(400).send({
-        message: "Please fill all the fields",
-        status: false,
-      });
-    }
-
-    const task = await Task.findById(task_id);
     if (!task) {
       return res.send({
         message: "Task not found",
         status: false,
       });
     }
-    if (title) {
-      task.title = title;
-    }
-    if (description) {
-      task.description = description;
-    }
-    if (priority) {
-      task.priority = priority;
-    }
-    if (time) {
-      task.time = time;
-    }
-    if (status) {
-      task.status = status;
-    }
-    if (remarks) {
-      task.remarks = remarks;
-    }
-    await task.save();
-    res.send({
+    return res.send({
       message: "Task updated successfully",
       status: true,
       task: {
@@ -417,24 +405,33 @@ app.post("/updatetask", async (req, res) => {
 // create a delete task route and delete the task of the user from the database with the user id
 
 app.post("/deletetask", async (req, res) => {
-  const { user_id, task_id } = req.body;
-  if (!mongoose.Types.ObjectId.isValid(user_id)) {
-    return res.send({
-      message: "invalid user id",
-      status: false,
-    });
-  }
+  const { task_id } = req.body;
   if (!mongoose.Types.ObjectId.isValid(task_id)) {
-    return res.send({
-      message: "invalid task id",
+    return res.status(400).send({
+      message: "Invalid task id",
       status: false,
     });
   }
+
+  if (!task_id) {
+    return res.status(400).send({
+      message: "Please fill all the fields",
+      status: false,
+    });
+  }
+
   try {
-    await Task.findOneAndDelete({ user_id, _id: task_id });
-    res.send({
+    const task = await Task.findByIdAndDelete(task_id);
+    if (!task) {
+      return res.send({
+        message: "Task not found",
+        status: false,
+      });
+    }
+    return res.send({
       message: "Task deleted successfully",
       status: true,
+      task: task,
     });
   } catch (error) {
     res.send({
@@ -544,32 +541,40 @@ app.post("/getallusertasks", async (req, res) => {
 // create a give remarks route and give the remarks of the user task to the user in the database with the user id.
 
 app.post("/giveremarks", async (req, res) => {
-  const { user_id, task_id, remarks } = req.body;
-  if (!mongoose.Types.ObjectId.isValid(user_id)) {
-    return res.send({
-      message: "Invalid user id",
-      status: false,
-    });
-  }
+  const { task_id, remarks } = req.body;
+
   if (!mongoose.Types.ObjectId.isValid(task_id)) {
     return res.send({
       message: "Invalid task id",
       status: false,
     });
   }
+
+  if (!remarks) {
+    return res.send({
+      message: "Please fill all the fields",
+      status: false,
+    });
+  }
+
   try {
-    const task = await Task.findById(task_id);
+    const task = await Task.findByIdAndUpdate(
+      { _id: task_id },
+      {
+        remarks: remarks,
+      },
+      { new: true }
+    );
     if (!task) {
       return res.send({
         message: "Task not found",
         status: false,
       });
     }
-    task.remarks = remarks;
-    await task.save();
-    res.send({
+    return res.send({
       message: "Remarks given successfully",
       status: true,
+      task: task,
     });
   } catch (error) {
     res.send({
