@@ -348,12 +348,6 @@ app.post("/addtask", async (req, res) => {
 
 app.post("/updatetask", async (req, res) => {
   const { task_id, title, description, priority, time, status } = req.body;
-  if (!mongoose.Types.ObjectId.isValid(task_id)) {
-    return res.status(400).send({
-      message: "Invalid task id",
-      status: false,
-    });
-  }
   try {
     const task = await Task.findByIdAndUpdate(
       { _id: task_id },
@@ -372,12 +366,27 @@ app.post("/updatetask", async (req, res) => {
         status: false,
       });
     }
+
     if (!task) {
       return res.send({
         message: "Task not found",
         status: false,
       });
     }
+
+    if (
+      title === "" ||
+      description === "" ||
+      priority === "" ||
+      time === "" ||
+      status === ""
+    ) {
+      return res.send({
+        message: "Please fill all the fields",
+        status: false,
+      });
+    }
+
     return res.send({
       message: "Task updated successfully",
       status: true,
