@@ -96,8 +96,139 @@ const Task = mongoose.model("Task", {
   },
 });
 
+// create schema for admin login and admin can add, update, and delete tasks of users with the user id in the database (tasks are stored in the database as an array).
+
+const Admin = mongoose.model("Admin", {
+  username: {
+    type: String,
+    required: true,
+    min: 3,
+    max: 255,
+  },
+  password: {
+    type: String,
+    required: true,
+    min: 6,
+    max: 255,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 app.get("/", (req, res) => {
   res.send("Welcome to User Tasks Management System");
+});
+
+// admin signup
+
+app.post("/admin/signup", async (req, res) => {
+  const { username, password } = req.body;
+
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(password, salt);
+
+  const admin = new Admin({
+    username,
+    password: hash,
+  });
+
+  const adminExist = await Admin.findOne({ username });
+
+  if (adminExist) {
+    return res.status(400).send({
+      message: "Admin already exists",
+      status: false,
+    });
+  }
+
+  try {
+    await admin.save();
+    res.status(201).send({
+      message: "Admin created successfully",
+      status: true,
+      admin: admin,
+    });
+  } catch (error) {
+    res.status(400).send({
+      message: "Admin creation failed",
+      status: false,
+      error: error,
+    });
+  }
+});
+
+// admin login
+
+app.post("/admin/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const admin = await Admin.findOne({ username });
+    if (!admin) {
+      return res.send({
+        message: "Admin not found",
+        status: false,
+      });
+    }
+    const isMatch = bcrypt.compareSync(password, admin.password);
+    if (!isMatch) {
+      return res.send({
+        message: "Invalid password",
+        status: false,
+      });
+    }
+    res.status(200).send({
+      message: "Admin logged in successfully",
+      status: true,
+      admin: {
+        admin_id: admin._id,
+        username: admin.username,
+      },
+    });
+  } catch (error) {
+    res.send({
+      message: "Internal Server Error",
+      status: false,
+      error: error,
+    });
+  }
+});
+
+// get all users
+
+app.post("/admin/getallusers", async (req, res) => {
+  const { admin_id } = req.body;
+
+  if (!admin_id) {
+    return res.status(400).send({
+      message: "Admin id is required",
+      status: false,
+    });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(admin_id)) {
+    return res.status(400).send({
+      message: "Invalid admin id",
+      status: false,
+    });
+  }
+
+  try {
+    const users = await User.find({});
+    res.status(200).send({
+      message: "Users found successfully",
+      status: true,
+      users: users,
+    });
+  } catch (error) {
+    res.send({
+      message: "Internal Server Error",
+      status: false,
+      error: error,
+    });
+  }
 });
 
 // create a signup user route and save the user to the database
@@ -116,7 +247,7 @@ app.post("/signup", async (req, res) => {
 
   const userExists = await User.findOne({ email });
   if (userExists) {
-    return res.status(400).send({
+    return res.send({
       message: "User already exists",
       status: false,
     });
@@ -151,14 +282,14 @@ app.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).send({
+      return res.send({
         message: "User does not exist",
         status: false,
       });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).send({
+      return res.send({
         message: "Invalid password",
         status: false,
       });
@@ -593,43 +724,6 @@ app.post("/giveremarks", async (req, res) => {
     });
   }
 });
-
-// // create a set status route and set the status of the user task to the user in the database with the user id.
-
-// app.post("/setstatus", async (req, res) => {
-//   const { user_id, task_id, status } = req.body;
-//   if (!mongoose.Types.ObjectId.isValid(user_id)) {
-//     return res.send({
-//       message: "Invalid user id",
-//       status: false,
-//     });
-//   }
-//   if (!mongoose.Types.ObjectId.isValid(task_id)) {
-//     return res.send({
-//       message: "Invalid task id",
-//       status: false,
-//     });
-//   }
-//   try {
-//     const task = await Task.findByIdAndUpdate(
-//       task_id,
-//       {
-//         status,
-//       },
-//       { new: true }
-//     );
-//     res.send({
-//       message: "Status set successfully",
-//       status: true,
-//     });
-//   } catch (error) {
-//     res.send({
-//       message: "Error setting status, Internal server error",
-//       status: false,
-//       error: error,
-//     });
-//   }
-// });
 
 app.listen(port, () => {
   console.log(`User Task Management app listening on port ${port}`);
