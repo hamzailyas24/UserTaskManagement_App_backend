@@ -137,7 +137,7 @@ app.post("/admin/signup", async (req, res) => {
   const adminExist = await Admin.findOne({ username });
 
   if (adminExist) {
-    return res.status(400).send({
+    return res.send({
       message: "Admin already exists",
       status: false,
     });
@@ -151,7 +151,7 @@ app.post("/admin/signup", async (req, res) => {
       admin: admin,
     });
   } catch (error) {
-    res.status(400).send({
+    res.send({
       message: "Admin creation failed",
       status: false,
       error: error,
@@ -202,14 +202,14 @@ app.post("/admin/getallusers", async (req, res) => {
   const { admin_id } = req.body;
 
   if (!admin_id) {
-    return res.status(400).send({
+    return res.send({
       message: "Admin id is required",
       status: false,
     });
   }
 
   if (!mongoose.Types.ObjectId.isValid(admin_id)) {
-    return res.status(400).send({
+    return res.send({
       message: "Invalid admin id",
       status: false,
     });
@@ -426,14 +426,14 @@ app.post("/addtask", async (req, res) => {
   } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(user_id)) {
-    return res.status(400).send({
+    return res.send({
       message: "Invalid user id",
       status: false,
     });
   }
 
   if (!user_id || !title || !description || !priority || !time || !status) {
-    return res.status(400).send({
+    return res.send({
       message: "Please fill all the fields",
       status: false,
     });
@@ -492,7 +492,7 @@ app.post("/updatetask", async (req, res) => {
       { new: true }
     );
     if (!mongoose.Types.ObjectId.isValid(task_id)) {
-      return res.status(400).send({
+      return res.send({
         message: "Invalid task id",
         status: false,
       });
@@ -547,14 +547,14 @@ app.post("/updatetask", async (req, res) => {
 app.post("/deletetask", async (req, res) => {
   const { task_id } = req.body;
   if (!mongoose.Types.ObjectId.isValid(task_id)) {
-    return res.status(400).send({
+    return res.send({
       message: "Invalid task id",
       status: false,
     });
   }
 
   if (!task_id) {
-    return res.status(400).send({
+    return res.send({
       message: "Please fill all the fields",
       status: false,
     });
@@ -690,12 +690,12 @@ app.post("/giveremarks", async (req, res) => {
     });
   }
 
-  if (!remarks) {
-    return res.send({
-      message: "Please fill all the fields",
-      status: false,
-    });
-  }
+  // if (!remarks) {
+  //   return res.send({
+  //     message: "Please fill all the fields",
+  //     status: false,
+  //   });
+  // }
 
   try {
     const task = await Task.findByIdAndUpdate(
