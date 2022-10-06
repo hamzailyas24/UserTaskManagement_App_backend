@@ -233,6 +233,78 @@ app.post("/admin/getallusers", async (req, res) => {
   }
 });
 
+// create a give remarks route and give the remarks of the user task to the user in the database with the user id.
+
+app.post("/giveremarks", async (req, res) => {
+  const { task_id, remarks } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(task_id)) {
+    return res.send({
+      message: "Invalid task id",
+      status: false,
+    });
+  }
+
+  try {
+    const task = await Task.findByIdAndUpdate(
+      { _id: task_id },
+      {
+        remarks: remarks,
+      },
+      { new: true }
+    );
+    if (!task) {
+      return res.send({
+        message: "Task not found",
+        status: false,
+      });
+    }
+    return res.send({
+      message: "Remarks given successfully",
+      status: true,
+      task: task,
+    });
+  } catch (error) {
+    res.send({
+      message: "Error giving remarks, Internal server error",
+      status: false,
+      error: error,
+    });
+  }
+});
+
+app.post("/admin/getdashboard", async (req, res) => {
+  const { admin_id } = req.body;
+  if (!admin_id) {
+    return res.send({
+      message: "Admin id is required",
+      status: false,
+    });
+  }
+  if (!mongoose.Types.ObjectId.isValid(admin_id)) {
+    return res.send({
+      message: "Invalid admin id",
+      status: false,
+    });
+  }
+  try {
+    const users = await User.find({});
+    const total_tasks = await Task.find({});
+    res.send({
+      message: "Dashboard data fetch successfully.",
+      status: true,
+      total_users: users.length,
+      total_tasks: total_tasks.length,
+    });
+  } catch (error) {
+    res.send({
+      message: "Internal Server Error",
+      status: false,
+      error: error,
+    });
+  }
+});
+
 // create a signup user route and save the user to the database
 
 app.post("/signup", async (req, res) => {
@@ -674,53 +746,6 @@ app.post("/getallusertasks", async (req, res) => {
   } catch (error) {
     res.send({
       message: "Error fetching tasks, Internal server error",
-      status: false,
-      error: error,
-    });
-  }
-});
-
-// create a give remarks route and give the remarks of the user task to the user in the database with the user id.
-
-app.post("/giveremarks", async (req, res) => {
-  const { task_id, remarks } = req.body;
-
-  if (!mongoose.Types.ObjectId.isValid(task_id)) {
-    return res.send({
-      message: "Invalid task id",
-      status: false,
-    });
-  }
-
-  // if (!remarks) {
-  //   return res.send({
-  //     message: "Please fill all the fields",
-  //     status: false,
-  //   });
-  // }
-
-  try {
-    const task = await Task.findByIdAndUpdate(
-      { _id: task_id },
-      {
-        remarks: remarks,
-      },
-      { new: true }
-    );
-    if (!task) {
-      return res.send({
-        message: "Task not found",
-        status: false,
-      });
-    }
-    return res.send({
-      message: "Remarks given successfully",
-      status: true,
-      task: task,
-    });
-  } catch (error) {
-    res.send({
-      message: "Error giving remarks, Internal server error",
       status: false,
       error: error,
     });
