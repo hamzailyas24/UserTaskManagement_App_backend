@@ -126,11 +126,13 @@ app.get("/", (req, res) => {
 app.post("/admin/signup", async (req, res) => {
   const { username, password } = req.body;
 
+  //passwordHash
+
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
 
   const admin = new Admin({
-    username,
+    username: username.toLowerCase(),
     password: hash,
   });
 
@@ -145,7 +147,7 @@ app.post("/admin/signup", async (req, res) => {
 
   try {
     await admin.save();
-    res.status(201).send({
+    res.send({
       message: "Admin created successfully",
       status: true,
       admin: admin,
@@ -179,7 +181,7 @@ app.post("/admin/login", async (req, res) => {
         status: false,
       });
     }
-    res.status(200).send({
+    res.send({
       message: "Admin logged in successfully",
       status: true,
       admin: {
@@ -217,7 +219,7 @@ app.post("/admin/getallusers", async (req, res) => {
 
   try {
     const users = await User.find({});
-    res.status(200).send({
+    res.send({
       message: "Users found successfully",
       status: true,
       users: users,
